@@ -21,41 +21,45 @@ def textDiff(a, b):
 		s = difflib.SequenceMatcher(None, a, b)
 	for e in s.get_opcodes():
 		if e[0] == "replace":
-			# @@ need to do something more complicated here
-			# call textDiff but not for html, but for some html... ugh
-			# gonna cop-out for now
-			out.append('<del class="diff modified">'+''.join(a[e[1]:e[2]]) + '</del><ins class="diff modified">'+''.join(b[e[3]:e[4]])+"</ins>")
+			out.append(markStart('modified') + ''.join(b[e[3]:e[4]]) + markEnd('modified'))
 		elif e[0] == "delete":
-			out.append('<del class="diff">'+ ''.join(a[e[1]:e[2]]) + "</del>")
+			out.append(markStart('deleted') + ''.join(a[e[1]:e[2]]) + markEnd('deleted'))
 		elif e[0] == "insert":
-			out.append('<ins class="diff">'+''.join(b[e[3]:e[4]]) + "</ins>")
+			out.append(markStart('inserted') + ''.join(b[e[3]:e[4]]) + markEnd('inserted'))
 		elif e[0] == "equal":
 			out.append(''.join(b[e[3]:e[4]]))
 		else: 
 			raise "Um, something's broken. I didn't expect a '" + `e[0]` + "'."
 	return ''.join(out)
 
-def html2list(x, b=0):
+def html2list(x):
 	mode = 'char'
 	cur = ''
 	out = []
 	for c in x:
 		if mode == 'tag':
 			if c == '>': 
-				if b: cur += ']'
-				else: cur += c
+				cur += c
 				out.append(cur); cur = ''; mode = 'char'
 			else: cur += c
 		elif mode == 'char':
 			if c == '<': 
 				out.append(cur)
-				if b: cur = '['
-				else: cur = c
+				cur = c
 				mode = 'tag'
 			elif c in string.whitespace: out.append(cur+c); cur = ''
 			else: cur += c
 	out.append(cur)
 	return filter(lambda x: x is not '', out)
+
+def markStart(cssClass):
+	return mark('&raquo;', cssClass)
+
+def markEnd(cssClass):
+	return mark('&laquo;', cssClass)
+
+def mark(symbol, cssClass):
+	return '<span class="' + cssClass + '">&nbsp;' + symbol + '&nbsp;</span> '
 
 if __name__ == '__main__':
 	import sys
